@@ -205,7 +205,24 @@ into one Crisis-or-worse class.
 a separate class, and the operational distinction that matters most is whether a
 county has crossed into Crisis.
 
-## 12. Citations verified, and one corrected
+## 12. Repository structure
+
+**Departure from the plan.** The planned structure was `paper/`, `notebook/`,
+`index.html`, `DECISIONS.md`, and `README.md`.
+
+**Decision.** Three directories were added: `src/` holds the pipeline as eleven
+importable modules, `data/processed/` holds the county-level series as committed
+CSV files, and `model/` holds the fitted models, results, and SHAP summaries.
+
+**Why.** A notebook that downloads several gigabytes of raster data before it
+can produce a number is not reproducible in practice. Splitting the pipeline
+into modules and committing the county-level intermediate series means the
+modelling, SHAP, and figure stages re-run in minutes from a clean checkout,
+while the fetch stages remain available and are what produced those series. The
+notebook imports the same modules, so there is one implementation rather than
+two that can drift apart.
+
+## 13. Citations verified, and one corrected
 
 Every citation was checked against Crossref or the publisher before use. One
 correction resulted: the methodological template paper (Climate 14(1):14, DOI
