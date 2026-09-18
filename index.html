@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Scholar indexing -->
+  <meta name="citation_title"
+        content="Satellite-Derived Drought Indicators as Early Predictors of Food Insecurity Risk in Northern Kenya's Arid and Semi-Arid Lands">
+  <meta name="citation_author"       content="Ouma, Craig Carlos">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_online_date"      content="2026/09/19">
+  <meta name="citation_language"     content="en">
+  <meta name="citation_abstract_html_url"
+        content="https://craigouma.github.io/eo-drought-food-security-kenya/">
+  <meta name="citation_pdf_url"
+        content="https://craigouma.github.io/eo-drought-food-security-kenya/paper/eo_drought_food_security.pdf">
+  <meta name="citation_keywords"
+        content="earth observation; drought early warning; food security; CHIRPS; MODIS NDVI; vegetation condition index; standardized precipitation index; SHAP; XGBoost; Kenya ASAL">
+
+  <!-- Open Graph -->
+  <meta property="og:title"
+        content="Satellite-Derived Drought Indicators as Early Predictors of Food Insecurity Risk in Northern Kenya: Craig Carlos Ouma">
+  <meta property="og:description"
+        content="CHIRPS rainfall and MODIS vegetation data against 2,350 FEWS NET food insecurity classifications. Satellite indicators alone anticipate the direction of 59% of phase deteriorations one to six months ahead, which a persistence rule misses entirely.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://craigouma.github.io/eo-drought-food-security-kenya/">
+
+  <title>Satellite-Derived Drought Indicators as Early Predictors of Food Insecurity Risk in Northern Kenya: Craig Carlos Ouma</title>
+
+  <style>
+    :root {
+      --navy:    #1A3A5C;
+      --blue:    #2563EB;
+      --blue-lt: #EFF6FF;
+      --green:   #065F46;
+      --green-lt:#ECFDF5;
+      --amber:   #92400E;
+      --amber-lt:#FEF3C7;
+      --maroon:  #8B1D3A;
+      --maroon-lt:#FBE9ED;
+      --bg:      #FFFFFF;
+      --bg-alt:  #F4F8FC;
+      --border:  #CBD8E6;
+      --text:    #1E2D3D;
+      --muted:   #566B7E;
+      --code-bg: #111827;
+      --code-txt:#93C5FD;
+      --serif: 'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+      --sans:  system-ui,-apple-system,'Segoe UI',sans-serif;
+      --mono:  'Courier New',Courier,monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);
+         line-height:1.65;font-size:16px}
+    .page{max-width:740px;margin:0 auto;padding:0 24px 80px}
+
+    /* VCI trace crossing the drought threshold, signature element */
+    .wave-header{width:100%;height:56px;margin-bottom:36px;overflow:hidden}
+    .wave-header svg{width:100%;height:56px;display:block}
+
+    /* Badges */
+    .badge-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:11px;font-weight:700;
+           letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;
+           border-radius:3px;background:#DBEAFE;color:#1D4ED8}
+    .badge.expl{background:var(--green-lt);color:var(--green)}
+    .badge.me  {background:var(--amber-lt);color:var(--amber)}
+    .badge.ind {background:var(--maroon-lt);color:var(--maroon)}
+    .pub-date{font-size:13px;color:var(--muted);font-family:var(--mono)}
+
+    h1{font-family:var(--serif);font-size:clamp(22px,4vw,30px);font-weight:700;
+       line-height:1.25;color:var(--navy);margin-bottom:20px;letter-spacing:-.01em}
+
+    .author-block{margin-bottom:28px}
+    .author-name{font-size:16px;font-weight:600;color:var(--text)}
+    .affil{font-size:13.5px;color:var(--muted);margin-top:2px}
+
+    /* Stats */
+    .stats{display:flex;border:1px solid var(--border);border-radius:8px;
+           overflow:hidden;margin-bottom:32px}
+    .stat{flex:1;text-align:center;padding:16px 10px;
+          border-right:1px solid var(--border);background:var(--bg-alt)}
+    .stat:last-child{border-right:none}
+    .stat-value{font-family:var(--serif);font-size:24px;font-weight:700;
+                color:var(--navy);line-height:1;display:block}
+    .stat-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;
+                letter-spacing:.07em;margin-top:5px;display:block}
+
+    /* Buttons */
+    .btn-row{display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+         font-size:14px;font-weight:600;padding:10px 22px;border-radius:6px;
+         transition:opacity .15s,transform .1s;white-space:nowrap}
+    .btn:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-primary{background:var(--navy);color:#fff}
+    .btn-accent{background:var(--blue);color:#fff}
+    .btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--border)}
+
+    .section-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+                   text-transform:uppercase;color:var(--blue);font-weight:700;
+                   margin-bottom:10px}
+
+    /* Abstract */
+    .abstract-box{background:var(--blue-lt);border-left:3px solid var(--blue);
+                  border-radius:0 6px 6px 0;padding:22px 26px;margin-bottom:36px}
+    .abstract-box p{font-family:var(--serif);font-size:15.5px;
+                    line-height:1.75;color:var(--text)}
+
+    /* Key finding callout */
+    .callout{background:var(--amber-lt);border-left:3px solid #D97706;
+             border-radius:0 6px 6px 0;padding:16px 20px;margin-bottom:32px}
+    .callout p{font-family:var(--serif);font-size:15px;color:var(--amber)}
+    .callout strong{color:#78350F}
+
+    /* Scope note */
+    .scope-note{background:var(--bg-alt);border:1px solid var(--border);
+                border-radius:6px;padding:14px 18px;margin-bottom:32px;font-size:13.5px;
+                color:var(--muted)}
+    .scope-note strong{color:var(--text)}
+
+    hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+    /* Figures grid */
+    .figures{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px}
+    .fig-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-alt)}
+    .fig-card img{width:100%;height:auto;display:block}
+    .fig-cap{font-size:12px;color:var(--muted);padding:8px 12px;
+             border-top:1px solid var(--border);font-family:var(--mono)}
+    .fig-full{grid-column:1/-1}
+
+    /* Results table */
+    .results-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:14px}
+    .results-table th{background:var(--navy);color:#fff;padding:10px 14px;
+                      text-align:left;font-weight:600;font-family:var(--mono);
+                      font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+    .results-table td{padding:9px 14px;border-bottom:1px solid var(--border)}
+    .results-table tr:last-child td{border-bottom:none}
+    .results-table tr:nth-child(even) td{background:var(--bg-alt)}
+    .results-table .best{font-weight:700;color:var(--navy)}
+    .table-note{font-size:13px;color:var(--muted);margin-bottom:32px}
+
+    /* Threshold list */
+    .threshold-list{list-style:none;margin-bottom:32px}
+    .threshold-list li{padding:12px 0 12px 18px;border-left:2px solid var(--border);
+                       margin-bottom:10px;font-size:14.5px}
+    .threshold-list li strong{color:var(--navy);font-family:var(--serif);font-size:15.5px}
+    .threshold-list li span{display:block;color:var(--muted);font-size:13.5px;margin-top:3px}
+
+    /* Keywords */
+    .keywords{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+    .kw{font-size:12.5px;padding:4px 11px;border:1px solid var(--border);
+        border-radius:99px;color:var(--muted);background:var(--bg-alt)}
+
+    /* BibTeX */
+    .bibtex-wrap{background:var(--code-bg);border-radius:8px;overflow:hidden;margin-bottom:36px}
+    .bibtex-bar{display:flex;justify-content:space-between;align-items:center;
+                padding:10px 16px;background:#1F2937}
+    .bibtex-bar span{font-family:var(--mono);font-size:11px;color:#9CA3AF;
+                     letter-spacing:.06em;text-transform:uppercase}
+    .copy-btn{font-family:var(--mono);font-size:11px;background:#374151;
+              color:#D1D5DB;border:none;padding:4px 12px;border-radius:4px;
+              cursor:pointer;transition:background .15s}
+    .copy-btn:hover{background:#4B5563}
+    pre.bibtex{font-family:var(--mono);font-size:12.5px;color:var(--code-txt);
+               line-height:1.7;padding:20px 20px 24px;overflow-x:auto}
+
+    /* Links */
+    .links-row{display:flex;gap:14px;flex-wrap:wrap}
+    .link-card{display:flex;align-items:center;gap:10px;text-decoration:none;
+               color:var(--text);font-size:14px;font-weight:500;padding:12px 18px;
+               border:1px solid var(--border);border-radius:8px;background:var(--bg-alt);
+               transition:border-color .15s,background .15s}
+    .link-card:hover{border-color:var(--blue);background:var(--blue-lt)}
+
+    footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);
+           font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+    @media(max-width:560px){
+      .stats{flex-direction:column}
+      .stat{border-right:none;border-bottom:1px solid var(--border)}
+      .stat:last-child{border-bottom:none}
+      .figures{grid-template-columns:1fr}
+      .btn-row{flex-direction:column}
+      .btn{justify-content:center}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Vegetation condition trace crossing the drought threshold, signature element -->
+  <div class="wave-header" aria-hidden="true">
+    <svg viewBox="0 0 740 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="42" x2="740" y2="42" stroke="#2563EB" stroke-width="1"
+            stroke-dasharray="4,4" opacity="0.35"/>
+      <path d="M0,20 C40,14 70,26 110,22 C150,18 180,34 220,30
+               C260,26 290,12 330,18 C370,24 400,40 440,45
+               C470,49 500,47 540,40 C580,33 610,22 650,18
+               C690,14 720,20 740,17"
+            fill="none" stroke="#1A3A5C" stroke-width="1.6"
+            stroke-linecap="round" opacity="0.55"/>
+      <path d="M420,38 C440,43 460,47 500,47"
+            fill="none" stroke="#8B1D3A" stroke-width="2.6"
+            stroke-linecap="round" opacity="0.55"/>
+    </svg>
+  </div>
+
+  <!-- Badges -->
+  <div class="badge-row">
+    <span class="badge">Preprint</span>
+    <span class="badge expl">SHAP Explainability</span>
+    <span class="badge me">Drought Early Warning</span>
+    <span class="badge ind">Independent Research</span>
+    <span class="pub-date">September 2026</span>
+  </div>
+
+  <!-- Title -->
+  <h1>Satellite-Derived Drought Indicators as Early
+      Predictors of Food Insecurity Risk in Northern
+      Kenya's Arid and Semi-Arid Lands</h1>
+
+  <!-- Author -->
+  <div class="author-block">
+    <div class="author-name">Craig Carlos Ouma</div>
+    <div class="affil">Independent Researcher &nbsp;&middot;&nbsp;
+      <a href="mailto:craigcarlos95@gmail.com"
+         style="color:var(--blue);text-decoration:none">craigcarlos95@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-value">2,350</span>
+      <span class="stat-label">County-Periods</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">45 yrs</span>
+      <span class="stat-label">Rainfall Record</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">0.913</span>
+      <span class="stat-label">AUROC, Satellite Only</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">59%</span>
+      <span class="stat-label">Deteriorations Caught</span>
+    </div>
+  </div>
+
+  <!-- Scope note -->
+  <div class="scope-note">
+    <strong>Scope note.</strong> The outcome variable is the acute food
+    insecurity classification published by FEWS NET for Kenya, obtained from
+    its public data warehouse, not a proxy index constructed from the same
+    satellite data used as predictors. Earth observation indicators were
+    extracted for all 47 Kenyan counties so the classifier has a national
+    panel to learn from; the five arid and semi-arid counties of Turkana,
+    Marsabit, Samburu, Baringo, and Wajir are the subject of the reported
+    results and are evaluated separately throughout. Full reasoning in the
+    repository's <code>DECISIONS.md</code>. This is independent research and
+    is not produced, reviewed, commissioned, or endorsed by FEWS NET, NDMA,
+    the Kenya Space Agency, or the European Space Agency.
+  </div>
+
+  <!-- Key finding -->
+  <div class="callout">
+    <p><strong>Key finding:</strong> A model using only satellite rainfall and
+    vegetation data does not beat persistence, which simply repeats each
+    county's previous published classification (accuracy 0.810 against 0.850).
+    The comparison inverts on the 205 county-periods where the classification
+    actually moved, where persistence is wrong by construction: the satellite
+    model assigns the correct class in 58.5% of them and anticipates the
+    direction of 59.3% of deteriorations at one month of lead, rising to 63.3%
+    at six months. Feeding the previous classification back into the model
+    raises accuracy to 0.824 and cuts deterioration detection to 41.6%.</p>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <a class="btn btn-primary" href="paper/eo_drought_food_security.pdf"
+       target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download PDF
+    </a>
+    <a class="btn btn-accent"
+       href="https://github.com/craigouma/eo-drought-food-security-kenya/blob/main/notebook/eo_drought_food_security.ipynb"
+       target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="9" y1="21" x2="9" y2="9"/>
+      </svg>
+      Notebook
+    </a>
+    <a class="btn btn-ghost" href="https://github.com/craigouma/eo-drought-food-security-kenya"
+       target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.38.6.11.82-.26.82-.58
+                 0-.28-.01-1.02-.01-2-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75
+                 -1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1
+                 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22
+                 -.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01
+                 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84
+                 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6
+                 -.01 2.9-.01 3.29 0 .32.21.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+      </svg>
+      Code &amp; Data
+    </a>
+    <a class="btn btn-ghost" href="https://www.chc.ucsb.edu/data/chirps"
+       target="_blank" rel="noopener">CHIRPS</a>
+  </div>
+
+  <!-- Abstract -->
+  <div class="section-label">Abstract</div>
+  <div class="abstract-box">
+    <p>Food security classifications for Kenya's arid and semi-arid counties
+    are published roughly three times a year and rest on field assessment.
+    Satellite rainfall and vegetation data, by contrast, arrive continuously
+    and at no cost to the user. This paper measures how much of the published
+    classification those satellite indicators can actually anticipate. Monthly
+    rainfall from CHIRPS (1981 to 2026) and 16-day vegetation indices from
+    MODIS (2001 to 2026) are reduced to county means for all 47 Kenyan
+    counties, converted into a gamma-fitted Standardized Precipitation Index
+    and a Kogan Vegetation Condition Index, and matched against 2,350
+    county-period acute food insecurity classifications published by FEWS NET
+    between 2011 and 2026. An XGBoost classifier using only Earth observation
+    features, evaluated by expanding-window walk-forward validation across
+    1,363 out-of-sample county-periods, separates Minimal, Stressed, and
+    Crisis-or-worse classifications with an accuracy of 0.810 and a
+    macro-averaged AUROC of 0.913, against 0.607 for a majority-class rule. A
+    SHAP analysis identifies vegetation condition lagged two months and the
+    six-month rainfall index as the leading time-varying drivers, and places
+    the Crisis decision boundary near a VCI of 18, inside the severe
+    vegetation deficit band that Kenya's National Drought Management Authority
+    already uses operationally.</p>
+  </div>
+
+  <hr>
+
+  <!-- Results table -->
+  <div class="section-label">Model Comparison</div>
+  <table class="results-table">
+    <thead>
+      <tr><th>Model</th><th>Accuracy</th><th>Macro F1</th><th>AUROC</th><th>Deteriorations caught</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Majority class</td><td>0.607</td><td>0.252</td><td>n/a</td><td>0%</td>
+      </tr>
+      <tr>
+        <td class="best">Persistence (previous bulletin)</td>
+        <td class="best">0.850</td><td class="best">0.769</td><td>n/a</td><td>0%</td>
+      </tr>
+      <tr>
+        <td>Satellite only, 1 month lead</td><td>0.810</td><td>0.707</td><td>0.913</td>
+        <td class="best">59.3%</td>
+      </tr>
+      <tr>
+        <td>Satellite only, 6 month lead</td><td>0.809</td><td>0.716</td><td>0.912</td>
+        <td class="best">63.3%</td>
+      </tr>
+      <tr>
+        <td>Satellite plus previous bulletin</td><td>0.824</td><td>0.710</td><td>0.933</td><td>41.6%</td>
+      </tr>
+      <tr>
+        <td>Satellite without county identity</td><td>0.775</td><td>0.664</td><td>0.896</td><td>54.0%</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="table-note">
+    Pooled expanding-window walk-forward validation, 2016 to 2026, 1,363
+    out-of-sample county-periods, of which 205 record a change in
+    classification and 113 a deterioration. Persistence is correct on every
+    stable period and, by construction, on none of the changes.
+  </p>
+
+  <!-- Thresholds -->
+  <div class="section-label">Thresholds the model learned</div>
+  <ul class="threshold-list">
+    <li><strong>Vegetation Condition Index below 18</strong>
+      <span>The point at which vegetation condition switches from pushing the
+      model away from a Crisis call to pushing it toward one. Kenya's NDMA
+      already classifies a VCI between 10 and 20 as a severe vegetation
+      deficit, so the learned boundary and the operational one agree.</span></li>
+    <li><strong>Six-month SPI below &minus;0.75</strong>
+      <span>The six-month rainfall accumulation carries about two and a half
+      times the weight of the one-month and three-month versions. Two weak
+      seasons matter; one weak month does not.</span></li>
+    <li><strong>Two consecutive months of deficit, not one</strong>
+      <span>Vegetation condition lagged two months contributes more than the
+      current month, so a trigger written on sustained deficit matches the
+      model's behaviour better than one written on an instantaneous
+      reading.</span></li>
+    <li><strong>No accuracy penalty for acting six months early</strong>
+      <span>Performance is flat from one to six months of lead, so a county
+      crossing both conditions can be flagged at the earlier point.</span></li>
+  </ul>
+
+  <!-- Figures -->
+  <div class="section-label">Key Figures</div>
+  <div class="figures">
+    <div class="fig-card fig-full">
+      <img src="paper/fig_classification_performance.png"
+           alt="Confusion matrix, alert trade-off, and deterioration detection by lead time">
+      <div class="fig-cap">Confusion matrix, Crisis alert trade-off, and deteriorations anticipated by lead time</div>
+    </div>
+    <div class="fig-card fig-full">
+      <img src="paper/fig_rainfall_vci_timeseries.png"
+           alt="SPI-3 and VCI time series for the five study counties">
+      <div class="fig-cap">Rainfall and vegetation indicators against classified phases, five ASAL counties, 2011 onward</div>
+    </div>
+    <div class="fig-card">
+      <img src="paper/fig_county_map.png" alt="Map of the five study counties">
+      <div class="fig-cap">The five study counties, shaded by mean annual rainfall</div>
+    </div>
+    <div class="fig-card">
+      <img src="paper/fig_shap_bar.png" alt="SHAP global importance">
+      <div class="fig-cap">Mean |SHAP|, contribution to the Crisis class and overall</div>
+    </div>
+    <div class="fig-card fig-full">
+      <img src="paper/fig_shap_dependence.png" alt="SHAP dependence plots">
+      <div class="fig-cap">Where each indicator starts pushing the model toward a Crisis call</div>
+    </div>
+    <div class="fig-card fig-full">
+      <img src="paper/fig_shap_beeswarm.png" alt="SHAP beeswarm">
+      <div class="fig-cap">Per-observation contributions to a Crisis call</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Data -->
+  <div class="section-label">Data</div>
+  <table class="results-table">
+    <thead>
+      <tr><th>Source</th><th>Variable</th><th>Resolution</th><th>Coverage used</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>CHIRPS v2.0</td><td>Monthly rainfall</td><td>0.05 degree</td><td>1981-01 to 2026-08</td></tr>
+      <tr><td>MOD13Q1 and MYD13Q1 v6.1</td><td>NDVI</td><td>250 m, 16-day</td><td>2001-01 to 2026-08</td></tr>
+      <tr><td>FEWS NET classifications</td><td>IPC-compatible phase</td><td>Sub-county units</td><td>2011-01 to 2026-06</td></tr>
+      <tr><td>HDX Kenya COD-AB</td><td>County boundaries</td><td>47 counties</td><td>Current</td></tr>
+    </tbody>
+  </table>
+  <p class="table-note">
+    CHIRPS is in the public domain, with rights waived by its producer. NASA
+    places no restriction on the subsequent use, sale, or redistribution of
+    MODIS data. FEWS NET distributes the classification records used here
+    under a public data usage policy. None of the four required an account,
+    a key, or an approval process.
+  </p>
+
+  <hr>
+
+  <!-- Keywords -->
+  <div class="section-label">Keywords</div>
+  <div class="keywords">
+    <span class="kw">Earth observation</span>
+    <span class="kw">Drought early warning</span>
+    <span class="kw">Food security</span>
+    <span class="kw">CHIRPS</span>
+    <span class="kw">MODIS NDVI</span>
+    <span class="kw">Vegetation Condition Index</span>
+    <span class="kw">Standardized Precipitation Index</span>
+    <span class="kw">SHAP explainability</span>
+    <span class="kw">XGBoost</span>
+    <span class="kw">Kenya ASAL</span>
+  </div>
+
+  <hr>
+
+  <!-- BibTeX -->
+  <div class="section-label">Cite this work</div>
+  <div class="bibtex-wrap">
+    <div class="bibtex-bar">
+      <span>BibTeX</span>
+      <button class="copy-btn" onclick="copyBib(this)">Copy</button>
+    </div>
+    <pre class="bibtex" id="bibtex-block">@misc{ouma2026eodrought,
+  title   = {Satellite-Derived Drought Indicators as Early
+             Predictors of Food Insecurity Risk in Northern
+             {Kenya's} Arid and Semi-Arid Lands},
+  author  = {Ouma, Craig Carlos},
+  year    = {2026},
+  month   = {September},
+  note    = {Preprint},
+  url     = {https://craigouma.github.io/eo-drought-food-security-kenya/}
+}</pre>
+  </div>
+
+  <!-- Links -->
+  <div class="section-label">Links</div>
+  <div class="links-row">
+    <a class="link-card" href="https://github.com/craigouma/eo-drought-food-security-kenya"
+       target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.38.6.11.82-.26.82-.58
+                 0-.28-.01-1.02-.01-2-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75
+                 -1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1
+                 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22
+                 -.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01
+                 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84
+                 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6
+                 -.01 2.9-.01 3.29 0 .32.21.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+      </svg>
+      GitHub
+    </a>
+    <a class="link-card" href="https://fews.net/east-africa/kenya"
+       target="_blank" rel="noopener">FEWS NET Kenya</a>
+    <a class="link-card" href="https://craigouma.github.io/child-nutrition-shap/"
+       target="_blank" rel="noopener">Child Nutrition SHAP</a>
+    <a class="link-card" href="https://craigouma.github.io/neonatal-paper/"
+       target="_blank" rel="noopener">Neonatal Early Warning</a>
+    <a class="link-card" href="https://craigouma.github.io/ptbxl-ecg-paper/"
+       target="_blank" rel="noopener">ECG Classification</a>
+    <a class="link-card" href="https://craigouma.github.io/credit-default/"
+       target="_blank" rel="noopener">Credit Default SHAP</a>
+  </div>
+
+  <footer>
+    Craig Carlos Ouma &nbsp;&middot;&nbsp; Independent Researcher &nbsp;&middot;&nbsp; 2026
+    &nbsp;&middot;&nbsp; Data: CHIRPS (Climate Hazards Center, UCSB), MODIS MOD13Q1
+    and MYD13Q1 (NASA), FEWS NET acute food insecurity classifications, HDX Kenya
+    COD-AB &nbsp;&middot;&nbsp; Not affiliated with, commissioned by, or endorsed by
+    FEWS NET, NDMA, the Kenya Space Agency, or the European Space Agency
+  </footer>
+
+</div>
+
+<script>
+  function copyBib(btn) {
+    navigator.clipboard.writeText(
+      document.getElementById('bibtex-block').textContent
+    ).then(() => {
+      btn.textContent = 'Copied';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
+</body>
+</html>
