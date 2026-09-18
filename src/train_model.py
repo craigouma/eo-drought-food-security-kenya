@@ -40,6 +40,7 @@ from build_dataset import (
     CATEGORICAL_FEATURES,
     CLASS_NAMES,
     FEATURES,
+    FEATURES_NO_COUNTY,
     FEATURES_WITH_PERSISTENCE,
     OUT_TEMPLATE,
     build_panel,
@@ -448,6 +449,7 @@ def main() -> None:
     variants = [
         ("eo_only", FEATURES),
         ("eo_plus_persistence", FEATURES_WITH_PERSISTENCE),
+        ("eo_no_county", FEATURES_NO_COUNTY),
     ]
 
     all_results = {"common_test_n": len(shared_keys)}

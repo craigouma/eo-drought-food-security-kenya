@@ -52,6 +52,11 @@ FEATURES = [
 # would have in hand.
 FEATURES_WITH_PERSISTENCE = FEATURES + ["previous_class", "months_since_previous"]
 
+# A third variant drops county identity, leaving the model with the Earth
+# observation signal and the structural rainfall context but no way to memorise
+# which counties are chronically food insecure.
+FEATURES_NO_COUNTY = [f for f in FEATURES if f != "county"]
+
 CATEGORICAL_FEATURES = ["season", "county"]
 
 SEASONS = {
