@@ -15,20 +15,29 @@ PAPER = ROOT / "paper"
 for _d in (RAW, PROCESSED, PAPER):
     _d.mkdir(parents=True, exist_ok=True)
 
-# Five arid and semi-arid land (ASAL) counties of northern Kenya.
-COUNTIES = ["Turkana", "Marsabit", "Samburu", "Baringo", "Wajir"]
+# Five arid and semi-arid land (ASAL) counties of northern Kenya. These are the
+# counties the paper is about: every county-level result, figure, and SHAP
+# interpretation is reported for them.
+STUDY_COUNTIES = ["Turkana", "Marsabit", "Samburu", "Baringo", "Wajir"]
+
+# Backwards-compatible alias used by the earlier stages of the pipeline.
+COUNTIES = STUDY_COUNTIES
+
+# Earth observation indicators are extracted for all 47 counties so that the
+# classifier has a national panel to learn from, rather than five counties alone.
+# See DECISIONS.md.
+ALL_COUNTIES = True
 
 # Analysis window. CHIRPS starts in 1981; MODIS Terra NDVI starts in February 2000.
-# The rainfall climatology is computed over the full CHIRPS record available here,
-# while the modelling panel is restricted to the period with both data sources.
 CHIRPS_START_YEAR = 1981
-CHIRPS_END_YEAR = 2024
-MODEL_START_YEAR = 2001
-MODEL_END_YEAR = 2024
+CHIRPS_END_YEAR = 2026
+MODIS_START_YEAR = 2001
+MODIS_END_YEAR = 2026
 
-# Time-respecting split: train on the earlier years, test on the later ones.
-TRAIN_END_YEAR = 2018
-TEST_START_YEAR = 2019
+# Time-respecting split: train on the earlier reporting periods, test on the later
+# ones. No random shuffling across time at any point.
+TRAIN_END_YEAR = 2020
+TEST_START_YEAR = 2021
 
 # Humanitarian Data Exchange, Kenya common operational dataset, administrative
 # boundaries (COD-AB). County level is ADM1 in this dataset.

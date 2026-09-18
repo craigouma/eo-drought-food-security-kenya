@@ -4,15 +4,14 @@ Source: Climate Hazards Center, University of California Santa Barbara,
 CHIRPS v2.0 Africa monthly rasters (0.05 degree, mm per month). The archive is
 public domain and needs no account.
 
-Each monthly raster is downloaded, clipped to the five study counties, reduced to
-an area-weighted county mean, and then discarded unless `--keep-rasters` is set.
+Each monthly raster is downloaded, clipped to each of Kenya's 47 counties,
+reduced to a county mean, and then discarded unless `--keep-rasters` is set.
 Only the resulting table (`data/processed/chirps_monthly_county.csv`) is kept,
-which is a few tens of kilobytes rather than a few gigabytes.
+which is a few megabytes rather than a few gigabytes.
 """
 
 import argparse
 import gzip
-import io
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -21,8 +20,15 @@ import rasterio
 import requests
 from rasterio.mask import mask
 
-from config import CHIRPS_BASE_URL, CHIRPS_END_YEAR, CHIRPS_START_YEAR, PROCESSED, RAW
-from fetch_boundaries import load_target_counties
+from config import (
+    CHIRPS_BASE_URL,
+    CHIRPS_END_YEAR,
+    CHIRPS_START_YEAR,
+    PROCESSED,
+    RAW,
+    STUDY_COUNTIES,
+)
+from fetch_boundaries import load_counties
 
 OUT_PATH = PROCESSED / "chirps_monthly_county.csv"
 CHIRPS_NODATA = -9999.0
@@ -58,16 +64,22 @@ def county_means(raster_bytes: bytes, counties) -> dict[str, float]:
     return means
 
 
-def fetch_month(args) -> dict:
+def fetch_month(args) -> dict | None:
+    """Return county means for one month, or None if that month is not published."""
     year, month, counties, keep = args
-    raster_bytes = fetch_raster_bytes(year, month, keep=keep)
+    try:
+        raster_bytes = fetch_raster_bytes(year, month, keep=keep)
+    except requests.HTTPError as exc:
+        if exc.response is not None and exc.response.status_code == 404:
+            return None
+        raise
     record = {"year": year, "month": month}
     record.update(county_means(raster_bytes, counties))
     return record
 
 
 def build_table(start_year: int, end_year: int, workers: int = 6, keep: bool = False) -> pd.DataFrame:
-    counties = load_target_counties()
+    counties = load_counties()
     jobs = [
         (year, month, counties, keep)
         for year in range(start_year, end_year + 1)
@@ -76,7 +88,8 @@ def build_table(start_year: int, end_year: int, workers: int = 6, keep: bool = F
     records = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         for i, record in enumerate(pool.map(fetch_month, jobs), start=1):
-            records.append(record)
+            if record is not None:
+                records.append(record)
             if i % 60 == 0:
                 print(f"  {i}/{len(jobs)} months processed", flush=True)
 
@@ -102,9 +115,14 @@ def main() -> None:
 
     table = build_table(args.start, args.end, args.workers, args.keep_rasters)
     table.to_csv(OUT_PATH, index=False)
-    print(f"wrote {OUT_PATH} ({len(table):,} county-months, {args.start}-{args.end})")
     print(
-        table.groupby("county", observed=True)["rainfall_mm"]
+        f"wrote {OUT_PATH} ({len(table):,} county-months, "
+        f"{table['county'].nunique()} counties, "
+        f"{table['date'].min():%Y-%m} to {table['date'].max():%Y-%m})"
+    )
+    study = table[table["county"].isin(STUDY_COUNTIES)]
+    print(
+        study.groupby("county", observed=True)["rainfall_mm"]
         .agg(["count", "mean", "min", "max"])
         .round(2)
         .to_string()
