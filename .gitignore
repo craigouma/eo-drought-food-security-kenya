@@ -1,0 +1,25 @@
+# Local operating brief (not part of the published research artifact)
+eo_drought_food_security_brief.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Raw Earth Observation downloads (large, re-fetchable from the cited sources)
+data/raw/
+*.tif
+*.tif.gz
+*.hdf
+*.zip
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.synctex.gz
+
+# macOS
+.DS_Store
